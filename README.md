@@ -1,4 +1,7 @@
 # day-trader
+
+[![CI](https://github.com/npinochet/day-trader/actions/workflows/node.js.yml/badge.svg)](https://github.com/npinochet/day-trader/actions)
+
 A simple forecast betting dapp game
 
 ## Basic Sample Hardhat Project
