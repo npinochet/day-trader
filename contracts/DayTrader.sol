@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-import "hardhat/console.sol"; // REMOVE
-
 contract DayTraderV1 is Ownable, Pausable {
     struct Bet {
         bool active;
@@ -40,8 +38,7 @@ contract DayTraderV1 is Ownable, Pausable {
     }
 
     function placeBet(bool bullish) external payable whenNotPaused {
-        uint maxAmount = maxBettingAmount();
-        console.log(maxAmount, maxAmount > 0);
+        uint maxAmount = maxBetAmount(msg.value);
         require(maxAmount > 0, "No enough balance in betting pool.");
         require(msg.value > 0, "Betting amount required.");
         require(msg.value <= maxAmount, "Betting amount too big, disallowed.");
@@ -56,7 +53,7 @@ contract DayTraderV1 is Ownable, Pausable {
         bet.amount = msg.value;
         bet.startTimestamp = block.timestamp;
 
-        reservedBalance += msg.value;
+        reservedBalance += msg.value * 2;
 
         activePlayers.push(msg.sender);
         emit PlacedBet(msg.sender, msg.value, bullish);
@@ -139,8 +136,14 @@ contract DayTraderV1 is Ownable, Pausable {
         }
     }
 
-    function maxBettingAmount() public view returns(uint) {
+    function maxBetAmount() external view returns(uint) {
         uint availableBalance = address(this).balance - reservedBalance - treasuryBalance;
+        return availableBalance >> 1;
+    }
+
+    function maxBetAmount(uint betAmount) internal view returns(uint) {
+        uint availableBalance = address(this).balance - betAmount - reservedBalance - treasuryBalance;
+        if (availableBalance <= 0) return 0;
         return availableBalance >> 1;
     }
 

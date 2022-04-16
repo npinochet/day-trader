@@ -1,5 +1,6 @@
 import { task } from 'hardhat/config';
 import '@nomiclabs/hardhat-waffle';
+import 'hardhat-gas-reporter';
 
 // This is a sample Hardhat task. To learn how to create your own go to
 // https://hardhat.org/guides/create-task.html
@@ -18,15 +19,11 @@ export default {
 		compilers: [
 			{
 				version: '0.8.9',
-				settings: {
-					optimizer: { enabled: true, runs: 9999 },
-				},
+				settings: { optimizer: { enabled: true } },
 			},
 			{
 				version: '0.8.0',
-				settings: {
-					optimizer: { enabled: true, runs: 9999 },
-				},
+				settings: { optimizer: { enabled: true } },
 			},
 		],
 	},
