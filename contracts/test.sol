@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.9;
 
 contract Test {
     address[] public activePlayers;
@@ -31,10 +31,6 @@ contract Test {
     }
 
     function popPlayer() external {
-        activePlayers.pop();
-    }
-
-    function popPlayer(uint lol) external {
         activePlayers.pop();
     }
 

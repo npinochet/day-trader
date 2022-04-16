@@ -4,7 +4,7 @@
   "description": "A simple forecast betting game",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "npx hardhat test",
     "lint": "eslint . --ext .ts"
   },
   "author": "npinochet",

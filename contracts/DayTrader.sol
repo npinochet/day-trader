@@ -1,9 +1,12 @@
 // SPDX-License-Identifier: GPL-3.0
-pragma solidity ^0.8.13;
+//pragma solidity ^0.8.13;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+
+import "hardhat/console.sol"; // REMOVE
 
 contract DayTraderV1 is Ownable, Pausable {
     struct Bet {
@@ -18,7 +21,7 @@ contract DayTraderV1 is Ownable, Pausable {
     uint public constant BET_WINDOW = 1 days;
     uint public constant MAX_TREASURY_FEE = 100; // 10%
 
-    mapping(address => Bet) public bets; // should be public? what if someone changes it with another smart contract
+    mapping(address => Bet) public bets;
     address[] public activePlayers;
     uint public reservedBalance;
 
@@ -29,6 +32,7 @@ contract DayTraderV1 is Ownable, Pausable {
 
     event PlacedBet(address indexed sender, uint amount, bool bullish);
     event ClaimedReward(address indexed sender, uint amount);
+    event Received(address sender, uint amount);
 
     constructor(uint _treasuryFee, address oracleAddress) {
         treasuryFee = _treasuryFee;
@@ -37,7 +41,9 @@ contract DayTraderV1 is Ownable, Pausable {
 
     function placeBet(bool bullish) external payable whenNotPaused {
         uint maxAmount = maxBettingAmount();
+        console.log(maxAmount, maxAmount > 0);
         require(maxAmount > 0, "No enough balance in betting pool.");
+        require(msg.value > 0, "Betting amount required.");
         require(msg.value <= maxAmount, "Betting amount too big, disallowed.");
 
         Bet storage bet = bets[msg.sender];
@@ -59,13 +65,14 @@ contract DayTraderV1 is Ownable, Pausable {
     function claimReward(uint80 endRoundId) external {
         Bet storage bet = bets[msg.sender];
         require(bet.active, "No active bet found, or lost bet.");
+        closeActiveBets();
         require(bet.readyToClaim || fastBetResult(msg.sender, endRoundId), "Bet lost, nothing to claim.");
 
         uint reward = bet.amount * 2;
         uint fees = (reward * treasuryFee) / 1000;
         treasuryBalance += fees;
 
-        reservedBalance -= bet.amount; // reviews this, what happend if readyToClaim is false, should fastBetResult be necesary?
+        reservedBalance -= bet.amount;
         payable(msg.sender).transfer(reward - fees);
         bet.active = false;
         emit ClaimedReward(msg.sender, bet.amount);
@@ -106,7 +113,7 @@ contract DayTraderV1 is Ownable, Pausable {
         return (endPrice >= startPrice) == bet.bullish;
     }
 
-    function closeActiveBets() external {
+    function closeActiveBets() public {
         for (uint i = 0; i < activePlayers.length; i++) {
             Bet storage bet = bets[activePlayers[i]];
 
@@ -154,5 +161,9 @@ contract DayTraderV1 is Ownable, Pausable {
 
     function unpause() external whenPaused onlyOwner {
         _unpause();
+    }
+
+    receive() external payable {
+        emit Received(msg.sender, msg.value);
     }
 }
