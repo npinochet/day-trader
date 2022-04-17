@@ -19,11 +19,7 @@ export default {
 		compilers: [
 			{
 				version: '0.8.9',
-				settings: { optimizer: { enabled: true } },
-			},
-			{
-				version: '0.8.0',
-				settings: { optimizer: { enabled: true } },
+				settings: { optimizer: { enabled: true, runs: 9999 } },
 			},
 		],
 	},

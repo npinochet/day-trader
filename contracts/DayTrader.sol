@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
+// import "hardhat/console.sol";
+
 contract DayTraderV1 is Ownable, Pausable {
     struct Bet {
         bool active;
@@ -34,7 +36,7 @@ contract DayTraderV1 is Ownable, Pausable {
 
     constructor(uint _treasuryFee, address oracleAddress) {
         treasuryFee = _treasuryFee;
-        oracle = AggregatorV3Interface(oracleAddress); // 0x9326BFA02ADD2366b30bacB125260Af641031331
+        oracle = AggregatorV3Interface(oracleAddress);
     }
 
     function placeBet(bool bullish) external payable whenNotPaused {
@@ -59,17 +61,18 @@ contract DayTraderV1 is Ownable, Pausable {
         emit PlacedBet(msg.sender, msg.value, bullish);
     }
 
-    function claimReward(uint80 endRoundId) external {
+    function claimReward() external {
         Bet storage bet = bets[msg.sender];
-        require(bet.active, "No active bet found, or lost bet.");
+
         closeActiveBets();
-        require(bet.readyToClaim || fastBetResult(msg.sender, endRoundId), "Bet lost, nothing to claim.");
+        require(bet.active, "No active bet found, or lost bet.");
+        require(bet.readyToClaim, "Bet ongoing, nothing to claim.");
 
         uint reward = bet.amount * 2;
         uint fees = (reward * treasuryFee) / 1000;
         treasuryBalance += fees;
 
-        reservedBalance -= bet.amount;
+        reservedBalance -= bet.amount * 2;
         payable(msg.sender).transfer(reward - fees);
         bet.active = false;
         emit ClaimedReward(msg.sender, bet.amount);
@@ -115,21 +118,19 @@ contract DayTraderV1 is Ownable, Pausable {
             Bet storage bet = bets[activePlayers[i]];
 
             try this.betResult(activePlayers[i]) returns (bool result) {
-                if (result) {
-                    bet.readyToClaim = true;
-                    continue;
-                }
-                reservedBalance -= bet.amount;
-                bet.active = false;
+                bet.active = result;
+                bet.readyToClaim = result;
+                if (!result) reservedBalance -= bet.amount * 2;
 
                 delete activePlayers[i];
-            } catch {
+            } catch /* Error(string memory reason) */ {
+                // console.log(activePlayers[i], reason);
                 continue;
             }
         }
 
         for (uint i = 0; i < activePlayers.length; i++) {
-            while (activePlayers[i] == address(0) && activePlayers.length > 0) {
+            while (activePlayers.length > 0 && activePlayers[i] == address(0)) {
                 activePlayers[i] = activePlayers[activePlayers.length - 1];
                 activePlayers.pop();
             }

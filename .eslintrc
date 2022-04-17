@@ -13,7 +13,6 @@
     "no-template-curly-in-string": 2,
     "no-unreachable-loop": 2,
     "no-multi-spaces": 2,
-    "no-magic-numbers": [1, { "ignore": [-1, 0, 1, 2, 3, 10] }],
     "no-unused-expressions": 2,
     "array-bracket-spacing": [1, "always"],
     "block-spacing": 1,

@@ -107,3 +107,6 @@ dist
 cache
 artifacts
 typechain
+
+# macOS files
+.DS_Store
