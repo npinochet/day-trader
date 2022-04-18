@@ -2,32 +2,7 @@
   "name": "daytrader",
   "version": "1.0.0",
   "description": "A simple forecast betting game",
-  "main": "index.js",
-  "scripts": {
-    "test": "npx hardhat test",
-    "lint": "eslint . --ext .ts"
-  },
   "author": "npinochet",
   "license": "ISC",
-  "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.5",
-    "@nomiclabs/hardhat-waffle": "^2.0.3",
-    "@types/chai": "^4.3.0",
-    "@types/mocha": "^9.1.0",
-    "@types/node": "^17.0.21",
-    "@typescript-eslint/eslint-plugin": "^4.22.0",
-    "@typescript-eslint/parser": "^4.22.0",
-    "chai": "^4.3.6",
-    "eslint": "^7.24.0",
-    "ethereum-waffle": "^3.4.0",
-    "ethers": "^5.5.4",
-    "hardhat": "^2.9.0",
-    "hardhat-gas-reporter": "^1.0.8",
-    "ts-node": "^10.6.0",
-    "typescript": "^4.6.2"
-  },
-  "dependencies": {
-    "@chainlink/contracts": "^0.4.0",
-    "@openzeppelin/contracts": "^4.5.0"
-  }
+  "workspaces": [ "contract", "front" ]
 }

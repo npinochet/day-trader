@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #374151;
+}
+
+.stripes {
+  --stripe-size: 150px;
+  --color1: #333c4a;
+  --color2: #374151;
+  background: repeating-linear-gradient(
+    45deg,
+    var(--color2) 25%,
+    var(--color2) 50%,
+    var(--color1) 50%,
+    var(--color1) 75%
+  );
+  background-size: var(--stripe-size) var(--stripe-size);
+}
+
+.gradient {
+	background: linear-gradient(-45deg, #333c4a, #3a4558, #334155);
+	background-size: 400% 400%;
+	animation: gradient 15s ease infinite;
+	height: 100%;
+}
+
+@keyframes gradient {
+	0% {
+		background-position: 0% 50%;
+	}
+	50% {
+		background-position: 100% 50%;
+	}
+	100% {
+		background-position: 0% 50%;
+	}
+}
