@@ -1,13 +1,65 @@
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ethers } from 'ethers';
+import Web3Modal from 'web3modal';
+
+let web3Modal: Web3Modal;
 
 export default function NavBar() {
+  const [ currentAccount, setCurrentAccount ] = useState('');
+
+  useEffect(() => {
+    web3Modal = new Web3Modal({ cacheProvider: true });
+    if (web3Modal.cachedProvider) connectWallet();
+  }, []);
+
+  const connectWallet = async () => {
+    try {
+      const instance = await web3Modal.connect();
+      const provider = new ethers.providers.Web3Provider(instance);
+      const accounts = await provider.listAccounts();
+      const network = await provider.getNetwork();
+      console.log('Connected to chain:', network.chainId);
+      if (accounts) {
+        setCurrentAccount(accounts[0]);
+        console.log('Found account', accounts[0]);
+      }
+    } catch (error) {
+      console.log('Error connecting wallet', error);
+    }
+  };
+
+  const disconnectWallet = async () => {
+    web3Modal.clearCachedProvider();
+    setCurrentAccount('');
+    console.log('Wallet disconnected');
+  };
+
+  const Button = ({text, clickHandler}) =>
+    <>
+      <button
+        onClick={clickHandler}
+        className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 mr-6 rounded"
+      >
+        {text}
+      </button>
+    </>;
+
   return (
     <div className="flex flex-wrap w-full items-center bg-gray-800 py-4 drop-shadow-lg">
-      <Link href="/"><a><h1 className="flex-none text-white mx-6 font-bold text-3xl">DayTrader</h1></a></Link>
+      <Link href="/"><a><h1 className="flex-none text-white ml-6 font-bold text-3xl">DayTrader</h1></a></Link>
       <div className="grow"/>
-      <button className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 mx-6 rounded">
-        Connect Wallet
-      </button>
+      {currentAccount &&
+        <a href={`https://etherscan.io/address/${currentAccount}`} target="_blank" className="hidden sm:block mx-6">
+          <p className="text-white">
+            {currentAccount.slice(0, 5)}...{currentAccount.slice(-5)}
+          </p>
+        </a>
+      }
+      <Button
+        text={currentAccount ? 'Disconnect' : 'Connect Wallet'}
+        clickHandler={currentAccount ? disconnectWallet : connectWallet}
+      />
     </div>
   );
 }

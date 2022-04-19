@@ -1,6 +1,6 @@
 # day-trader
 
-[![CI](https://github.com/npinochet/day-trader/actions/workflows/contract.yml/badge.svg)](https://github.com/npinochet/day-trader/actions)
+[![CI](https://github.com/npinochet/day-trader/actions/workflows/ci.yml/badge.svg)](https://github.com/npinochet/day-trader/actions)
 
 A simple forecast betting dapp game
 
