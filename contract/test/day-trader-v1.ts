@@ -116,13 +116,13 @@ describe('DayTraderV1', () => {
 
 		it('Should not be able to claim if not placed bet', async () => {
 			const message = 'No active bet found, or lost bet.';
-			await expect(dayTrader.claimReward()).be.revertedWith(message);
+			await expect(dayTrader.claimReward(await dayTrader.playersEndRoundIds())).be.revertedWith(message);
 		});
 
 		it('Should not be able to claim reward right away', async () => {
 			await placeBet(true);
 			const message = 'Bet ongoing, nothing to claim.';
-			await expect(dayTrader.claimReward()).be.revertedWith(message);
+			await expect(dayTrader.claimReward(await dayTrader.playersEndRoundIds())).be.revertedWith(message);
 		});
 
 		it('Should not be able to claim reward if lost', async () => {
@@ -135,7 +135,7 @@ describe('DayTraderV1', () => {
 			await loadOracleData(roundData);
 
 			const message = 'No active bet found, or lost bet.';
-			await expect(dayTrader.claimReward()).be.revertedWith(message);
+			await expect(dayTrader.claimReward(await dayTrader.playersEndRoundIds())).be.revertedWith(message);
 		});
 
 		it('Should be able to claim reward', async () => {
@@ -147,7 +147,7 @@ describe('DayTraderV1', () => {
 			roundData.push([ now() + betWindow + 10, 200 ]);
 			await loadOracleData(roundData);
 
-			await expect(dayTrader.claimReward()).be.not.reverted;
+			await expect(dayTrader.claimReward(await dayTrader.playersEndRoundIds())).be.not.reverted;
 
 			const fees = betAmount * 2 * treasuryFee / 1000;
 			expect(await dayTrader.treasuryBalance()).be.equal(toEth(fees));
@@ -175,7 +175,7 @@ describe('DayTraderV1', () => {
 
 			roundData.push([ now() + betWindow + 10, 200 ]);
 			await loadOracleData(roundData);
-			await dayTrader.closeActiveBets();
+			await dayTrader.closeActiveBets(await dayTrader.playersEndRoundIds());
 
 			const activePlayer = await dayTrader.activePlayers(0);
 			expect(activePlayer).be.eql(addresses[2].address);
@@ -200,14 +200,14 @@ describe('DayTraderV1', () => {
 			maxBetAmount = await dayTrader.maxBetAmount();
 			expect(maxBetAmount).be.equal(toEth('0.35'));
 
-			await dayTrader.closeActiveBets();
+			await dayTrader.closeActiveBets(await dayTrader.playersEndRoundIds());
 			await expect(dayTrader.activePlayers(0)).be.reverted;
 
 			maxBetAmount = await dayTrader.maxBetAmount();
 			expect(maxBetAmount).be.equal(toEth('0.55'));
 		});
 
-		it.skip('Stress test for gas calculation', async () => {
+		it('Stress test for gas calculation', async () => {
 			const betWindow = (await dayTrader.BET_WINDOW()).toNumber();
 
 			let time = now();
@@ -224,7 +224,7 @@ describe('DayTraderV1', () => {
 			});
 			await Promise.all(players);
 
-			await expect(dayTrader.closeActiveBets()).be.not.reverted;
+			await expect(dayTrader.closeActiveBets(await dayTrader.playersEndRoundIds())).be.not.reverted;
 		});
 	});
 

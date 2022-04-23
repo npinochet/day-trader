@@ -6,8 +6,6 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 
-// import "hardhat/console.sol";
-
 contract DayTraderV1 is Ownable, Pausable {
     struct Bet {
         bool active;
@@ -32,6 +30,7 @@ contract DayTraderV1 is Ownable, Pausable {
 
     event PlacedBet(address indexed sender, uint amount, bool bullish);
     event ClaimedReward(address indexed sender, uint amount);
+    event ClosedActiveBets(uint beforeLength, uint afterLength);
     event Received(address sender, uint amount);
 
     constructor(uint _treasuryFee, address oracleAddress) {
@@ -61,10 +60,10 @@ contract DayTraderV1 is Ownable, Pausable {
         emit PlacedBet(msg.sender, msg.value, bullish);
     }
 
-    function claimReward() external {
+    function claimReward(uint80[] calldata endRoundIds) external {
         Bet storage bet = bets[msg.sender];
 
-        closeActiveBets();
+        closeActiveBets(endRoundIds);
         require(bet.active, "No active bet found, or lost bet.");
         require(bet.readyToClaim, "Bet ongoing, nothing to claim.");
 
@@ -78,11 +77,7 @@ contract DayTraderV1 is Ownable, Pausable {
         emit ClaimedReward(msg.sender, bet.amount);
     }
 
-    function betResult(address player) public view returns(bool) {
-        return fastBetResult(player, getEndRoundId(player));
-    }
-
-    function getEndRoundId(address player) public view returns(uint80) {
+    function getEndRoundId(address player) external view returns(uint80) {
         Bet storage bet = bets[player];
         require(bet.active, "No active bet found.");
 
@@ -100,7 +95,19 @@ contract DayTraderV1 is Ownable, Pausable {
         return roundId;
     }
 
-    function fastBetResult(address player, uint80 endRoundId) public view returns(bool) {
+    function playersEndRoundIds() external view returns(uint80[] memory) {
+        uint80[] memory endRoundIds = new uint80[](activePlayers.length);
+        for (uint i = 0; i < activePlayers.length; i++) {
+            try this.getEndRoundId(activePlayers[i]) returns (uint80 endRound) {
+                endRoundIds[i] = endRound;
+            } catch {
+                continue;
+            }
+        }
+        return endRoundIds;
+    }
+
+    function betResult(address player, uint80 endRoundId) public view returns(bool) {
         Bet storage bet = bets[player];
         require(bet.active, "No bet placed yet.");
 
@@ -113,20 +120,21 @@ contract DayTraderV1 is Ownable, Pausable {
         return (endPrice >= startPrice) == bet.bullish;
     }
 
-    function closeActiveBets() public {
+    function betResult(address player) external view returns(bool) {
+        return betResult(player, this.getEndRoundId(player));
+    }
+
+    function closeActiveBets(uint80[] calldata endRoundIds) public {
         for (uint i = 0; i < activePlayers.length; i++) {
+            if (endRoundIds[i] == 0) continue;
+
+            bool result = betResult(activePlayers[i], endRoundIds[i]);
             Bet storage bet = bets[activePlayers[i]];
+            bet.active = result;
+            bet.readyToClaim = result;
+            if (!result) reservedBalance -= bet.amount * 2;
 
-            try this.betResult(activePlayers[i]) returns (bool result) {
-                bet.active = result;
-                bet.readyToClaim = result;
-                if (!result) reservedBalance -= bet.amount * 2;
-
-                delete activePlayers[i];
-            } catch /* Error(string memory reason) */ {
-                // console.log(activePlayers[i], reason);
-                continue;
-            }
+            delete activePlayers[i];
         }
 
         for (uint i = 0; i < activePlayers.length; i++) {
@@ -135,6 +143,7 @@ contract DayTraderV1 is Ownable, Pausable {
                 activePlayers.pop();
             }
         }
+        emit ClosedActiveBets(endRoundIds.length, activePlayers.length);
     }
 
     function maxBetAmount() external view returns(uint) {
