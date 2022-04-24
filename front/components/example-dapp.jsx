@@ -1,4 +1,5 @@
 // https://codesandbox.io/s/j43b10
+/* eslint-disable */
 import { useEffect, useState } from "react";
 import {
   VStack,

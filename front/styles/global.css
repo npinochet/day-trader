@@ -3,11 +3,12 @@
 @tailwind utilities;
 
 body {
+  @apply text-gray-200;
   background-color: #374151;
 }
 
 .stripes {
-  --stripe-size: 150px;
+  --stripe-size: 8px;
   --color1: #333c4a;
   --color2: #374151;
   background: repeating-linear-gradient(

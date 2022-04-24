@@ -1,7 +1,7 @@
 
 export default function Faq() {
   return (
-    <div className="m-10 py-10 text-center text-white">
+    <div className="mx-10 text-center">
       <h2 className="text-bold text-3xl">FAQ</h2>
 
       <h4 className="my-2 mt-6 underline text-bold text-2xl">How it works</h4>
